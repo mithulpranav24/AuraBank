@@ -2,4 +2,11 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <color name="pitch_black">#FF000000</color>
+    <color name="aura_cyan">#00FFFF</color>
+    <color name="aura_purple">#8000FF</color>
+    <color name="aura_blue">#0000FF</color>
+    <color name="text_light_gray">#E0E0E0</color>
+    <color name="card_background_dark">#1E1E1E</color>
 </resources>

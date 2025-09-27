@@ -1,63 +1,96 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/main_content"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="24dp"
-    android:gravity="center_horizontal"
-    tools:context=".LoginActivity">
+    android:gravity="center"
+    android:background="#000000"
+    android:padding="16dp">
 
+    <!-- Title -->
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Login"
-        android:textSize="34sp"
+        android:text="Welcome Back!"
+        android:textSize="24sp"
         android:textStyle="bold"
-        android:layout_marginBottom="32dp"/>
-
-    <Button
-        android:id="@+id/buttonBiometricLogin"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Login with Biometrics"
-        android:padding="12dp"/>
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="OR"
-        android:layout_marginVertical="16dp"/>
-
-    <EditText
-        android:id="@+id/editTextUsername"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Username"
-        android:inputType="textPersonName"
-        android:layout_marginBottom="16dp"/>
-
-    <EditText
-        android:id="@+id/editTextPassword"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Password"
-        android:inputType="textPassword"
+        android:textColor="#FFFFFF"
         android:layout_marginBottom="24dp"/>
 
+    <!-- Username Input -->
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginBottom="16dp"
+        app:boxStrokeColor="#BB86FC"
+        app:hintTextColor="#BB86FC"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/editTextUsername"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Username"
+            android:inputType="text"
+            android:textColor="#FFFFFF"
+            android:textColorHint="#B0B0B0"/>
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- Password Input -->
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginBottom="24dp"
+        app:boxStrokeColor="#BB86FC"
+        app:hintTextColor="#BB86FC"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        app:passwordToggleEnabled="true">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/editTextPassword"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Password"
+            android:inputType="textPassword"
+            android:textColor="#FFFFFF"
+            android:textColorHint="#B0B0B0"/>
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- Login Button -->
     <Button
         android:id="@+id/buttonLogin"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Login"
-        android:padding="12dp"/>
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginBottom="7dp"
+        android:text="Log In"
+        android:textAllCaps="false"
 
+        style="@style/Widget.Material3.Button"/>
+
+    <!-- Register Link -->
     <TextView
         android:id="@+id/textViewRegister"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="New to AuraBank? Register Now"
-        android:layout_marginTop="32dp"
-        android:padding="8dp"/>
+        android:text="OR"
+
+        android:textSize="12sp" />
+
+    <Button
+        android:id="@+id/buttonRegister"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="7dp"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginBottom="16dp"
+        android:text="Register"
+        android:textAllCaps="false"
+
+        style="@style/Widget.Material3.Button.OutlinedButton"/>
 
 </LinearLayout>

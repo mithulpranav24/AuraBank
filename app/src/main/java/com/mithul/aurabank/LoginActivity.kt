@@ -1,4 +1,4 @@
-package com.mithul.aurabank // Make sure this matches your package name
+package com.mithul.aurabank
 
 import android.content.Context
 import android.content.Intent
@@ -6,57 +6,57 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import java.util.concurrent.Executor
 
 class LoginActivity : AppCompatActivity() {
 
-    // --- Declare all UI elements ---
     private lateinit var usernameEditText: EditText
     private lateinit var passwordEditText: EditText
     private lateinit var loginButton: Button
-    private lateinit var biometricLoginButton: Button
     private lateinit var registerTextView: TextView
 
-    // --- Declare Biometric variables ---
     private lateinit var executor: Executor
     private lateinit var biometricPrompt: BiometricPrompt
     private lateinit var promptInfo: BiometricPrompt.PromptInfo
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
         setContentView(R.layout.activity_login)
 
-        // Fix for the status bar collision
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(android.R.id.content)) { view, insets ->
+        val mainContent: LinearLayout = findViewById(R.id.main_content)
+        ViewCompat.setOnApplyWindowInsetsListener(mainContent) { view, insets ->
             val systemBarInsets = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            view.setPadding(systemBarInsets.left, systemBarInsets.top, systemBarInsets.right, systemBarInsets.bottom)
+            // Set padding to avoid overlap with status bar
+            view.setPadding(
+                systemBarInsets.left,
+                systemBarInsets.top, // Ensure top padding matches status bar height
+                systemBarInsets.right,
+                systemBarInsets.bottom
+            )
             WindowInsetsCompat.CONSUMED
         }
 
-        // --- Initialize all UI elements ---
         usernameEditText = findViewById(R.id.editTextUsername)
         passwordEditText = findViewById(R.id.editTextPassword)
         loginButton = findViewById(R.id.buttonLogin)
-        biometricLoginButton = findViewById(R.id.buttonBiometricLogin)
-        registerTextView = findViewById(R.id.textViewRegister)
+        registerTextView = findViewById(R.id.buttonRegister)
 
-        // --- Setup Biometrics ---
         setupBiometrics()
 
-        // --- Set Click Listeners ---
         loginButton.setOnClickListener {
-            handlePasswordLogin()
-        }
-
-        biometricLoginButton.setOnClickListener {
-            showBiometricPrompt()
+            validateAndShowPrompt()
         }
 
         registerTextView.setOnClickListener {
@@ -65,7 +65,7 @@ class LoginActivity : AppCompatActivity() {
         }
     }
 
-    private fun handlePasswordLogin() {
+    private fun validateAndShowPrompt() {
         val username = usernameEditText.text.toString().trim()
         val password = passwordEditText.text.toString().trim()
 
@@ -74,63 +74,64 @@ class LoginActivity : AppCompatActivity() {
             return
         }
 
-        // Read saved data from SharedPreferences
-        val sharedPreferences = getSharedPreferences("AuraBankPrefs", Context.MODE_PRIVATE)
-        val savedUsername = sharedPreferences.getString("user_name", null)
-        val savedPassword = sharedPreferences.getString("user_password", null)
+        showBiometricPrompt()
+    }
 
-        // Check if credentials match
-        if (username == savedUsername && password == savedPassword) {
-            Toast.makeText(this, "Password Login Successful!", Toast.LENGTH_SHORT).show()
-            // In the next step, we will navigate to the dashboard here
-        } else {
-            Toast.makeText(this, "Invalid username or password", Toast.LENGTH_SHORT).show()
+    private fun performServerLogin() {
+        val username = usernameEditText.text.toString().trim()
+        val password = passwordEditText.text.toString().trim()
+
+        lifecycleScope.launch {
+            try {
+                val request = LoginRequest(username, password)
+                val response = RetrofitInstance.api.loginUser(request)
+
+                if (response.isSuccessful && response.body()?.status == "success") {
+                    val userId = response.body()?.userId
+                    if (userId != null) {
+                        navigateToDashboard(userId)
+                    }
+                } else {
+                    val errorMessage = response.body()?.message ?: "Invalid credentials"
+                    Toast.makeText(this@LoginActivity, "Login failed: $errorMessage", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Toast.makeText(this@LoginActivity, "Network Error: ${e.message}", Toast.LENGTH_LONG).show()
+            }
         }
     }
 
     private fun setupBiometrics() {
         executor = ContextCompat.getMainExecutor(this)
         val callback = object : BiometricPrompt.AuthenticationCallback() {
-            override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
-                super.onAuthenticationError(errorCode, errString)
-                Toast.makeText(applicationContext, "Auth error: $errString", Toast.LENGTH_SHORT).show()
-            }
-
             override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
                 super.onAuthenticationSucceeded(result)
-                Toast.makeText(applicationContext, "Biometric Login Successful!", Toast.LENGTH_SHORT).show()
-                // In the next step, we will navigate to the dashboard here
-            }
-
-            override fun onAuthenticationFailed() {
-                super.onAuthenticationFailed()
-                Toast.makeText(applicationContext, "Authentication failed", Toast.LENGTH_SHORT).show()
+                Toast.makeText(applicationContext, "Biometric Verified. Logging in...", Toast.LENGTH_SHORT).show()
+                performServerLogin()
             }
         }
-        biometricPrompt = BiometricPrompt(this, callback)
+        biometricPrompt = BiometricPrompt(this, executor, callback)
         promptInfo = BiometricPrompt.PromptInfo.Builder()
-            .setTitle("AuraBank Biometric Login")
-            .setSubtitle("Log in using your fingerprint or face")
-            .setNegativeButtonText("Use account password")
+            .setTitle("Confirm Login")
+            .setSubtitle("Use your fingerprint or face to continue")
+            .setNegativeButtonText("Cancel")
             .build()
     }
 
     private fun showBiometricPrompt() {
-        // Check if a user is registered before showing the prompt
-        val sharedPreferences = getSharedPreferences("AuraBankPrefs", Context.MODE_PRIVATE)
-        val isUserRegistered = sharedPreferences.getBoolean("is_user_registered", false)
-
-        if (!isUserRegistered) {
-            Toast.makeText(this, "No user is registered. Please register first.", Toast.LENGTH_LONG).show()
-            return
-        }
-
-        // Check if device supports biometrics
         val biometricManager = BiometricManager.from(this)
-        if (biometricManager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.DEVICE_CREDENTIAL) == BiometricManager.BIOMETRIC_SUCCESS) {
+        if (biometricManager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG) == BiometricManager.BIOMETRIC_SUCCESS) {
             biometricPrompt.authenticate(promptInfo)
         } else {
-            Toast.makeText(this, "Biometric features are not available or not enrolled.", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Biometrics not available. Logging in...", Toast.LENGTH_SHORT).show()
+            performServerLogin()
         }
+    }
+
+    private fun navigateToDashboard(userId: Int) {
+        val intent = Intent(this, DashboardActivity::class.java)
+        intent.putExtra("USER_ID", userId)
+        startActivity(intent)
+        finish()
     }
 }
